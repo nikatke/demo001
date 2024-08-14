@@ -48,5 +48,4 @@ stages:
           ssh infodba@192.168.80.54
           cd /opt/app/siemens
           rm -rf test
-          EOF
       displayName: 'Test'
