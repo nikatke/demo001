@@ -1,7 +1,8 @@
 trigger:
 - none
+
 pool: 
-  name: TC01
+  name: Default
   demands:
     - agent.name -equals TC01 
 
@@ -14,6 +15,7 @@ parameters:
   - DEV2
   - DEV3
   default: DEV1
+
 - name: Teamcenter_Install_Scenario
   displayName: 'Teamcenter Install Scenario'
   type: string
@@ -37,7 +39,7 @@ stages:
   jobs:
   - job: Prepare_Azure_Variables
     pool:
-      vmImage: 'windows-latest'
+      name: Default
     steps:
     - script: |
         echo '##vso[task.setvariable variable=dcEnvironmentName]$(VM_Environment_Name)_$(Build.BuildNumber)'
@@ -66,7 +68,7 @@ stages:
   jobs:
   - job: Execute_DC_Quick_Deploy
     pool:
-      vmImage: 'windows-latest'
+      name: Default
     steps:
     - task: PowerShell@2
       inputs:
@@ -86,7 +88,7 @@ stages:
 
   - job: Copy_Deploy_Scripts_To_VM
     pool:
-      vmImage: 'windows-latest'
+      name: Default
     steps:
     - task: CopyFiles@2
       inputs:
@@ -102,7 +104,7 @@ stages:
 
   - job: Execute_Deploy
     pool:
-      vmImage: 'windows-latest'
+      name: Default
     steps:
     - task: PowerShell@2
       inputs:
