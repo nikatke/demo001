@@ -41,14 +41,6 @@ stages:
     pool:
       name: Default
     steps:
-    - task: CopyFilesOverSSH@0
-      inputs:
-        sshEndpoint: 'DENBG0811VM'
-        sourceFolder: '/opt/app/siemens'
-        contents: 'test'
-        targetFolder: 'C:\Users\12880\Documents\Nisha_Katke'
-        readyTimeout: '20000'
-        failOnEmptySource: true
-
+    
 
     
