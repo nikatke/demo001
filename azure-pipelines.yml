@@ -41,9 +41,14 @@ stages:
     pool:
       name: Default
     steps:
-    - task: PowerShell@2
+    - task: CopyFilesOverSSH@0
       inputs:
-        targetType: 'inline'
-        script: |
-          ssh -t -t infodba@192.168.80.54 "cd /opt/app/siemens && rm -rf test"
-      displayName: 'Test'
+        sshEndpoint: 'DENBG0811VM'
+        sourceFolder: '/opt/app/siemens'
+        contents: 'test'
+        targetFolder: 'C:\Users\12880\Documents\Nisha_Katke'
+        readyTimeout: '20000'
+        failOnEmptySource: true
+
+
+    
