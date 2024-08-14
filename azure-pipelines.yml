@@ -45,7 +45,5 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          ssh infodba@192.168.80.54
-          cd /opt/app/siemens
-          sudo rm -rf test
+          ssh -t infodba@192.168.80.54 "cd /opt/app/siemens && rm -rf test"
       displayName: 'Test'
