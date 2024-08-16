@@ -1,46 +1,30 @@
 trigger:
 - none
 
-pool: 
-  name: Default
-  demands:
-    - agent.name -equals TC01 
+pool:
+  vmImage: 'ubuntu-latest'
 
-parameters:
-- name: VM_Environment_Name
-  displayName: 'VM Environment Name'
-  type: string
-  values:
-  - DEV1
-  - DEV2
-  - DEV3
-  default: DEV1
+jobs:
+- job: SSH_Connection
+  displayName: 'Establish SSH Connection between Two Remote VMs'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+    displayName: 'Use Python 3.x'
+  
+  - script: |
+      
+      REMOTE_USER_1="infodba"
+      REMOTE_HOST_1="DENBG0811VM"
+      REMOTE_USER_2="infodba"
+      REMOTE_HOST_2="DENBG0817VM"
 
-- name: Teamcenter_Install_Scenario
-  displayName: 'Teamcenter Install Scenario'
-  type: string
-  values:
-  - Install_Fnd140
-  - Install_Fnd141
-  default: Install_Fnd140
-
-variables:
-  dcusername: 'dcadmin'
-  dcpassword: 'dcadmin'
-  DC_QUICK_DEPLOY_PATH: 'D:\\DCQuickDeploy'
-  DC_URL: 'http://192.168.80.54:8080//deploymentcenter'
-  DC_DEPLOY_SCRIPT_DIR_NAME: 'deploy_scripts'
-  TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens/deploy_$(VM_Environment_Name)'
-  TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
-  TARGET_VM_SOFTWARE_LOCATION: '/usr/Siemens/Teamcenter14/teamcenter_root'
-
-stages:
-- stage: Execution
-  jobs:
-  - job: Execute
-    pool:
-      name: Default
-    steps:
-    
-
-    
+      
+      ssh -o StrictHostKeyChecking=no $REMOTE_USER_1@$REMOTE_HOST_1 << EOF
+        echo "Connected to $REMOTE_HOST_1"
+        
+        ssh -o StrictHostKeyChecking=no $REMOTE_USER_2@$REMOTE_HOST_2 "echo 'Connected to $REMOTE_HOST_2 from $REMOTE_HOST_1'"
+      EOF
+    displayName: 'SSH Connection Between Remote VMs'
