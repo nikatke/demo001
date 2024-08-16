@@ -1,8 +1,10 @@
 trigger:
 - none
 
-pool:
-  vmImage: 'ubuntu-latest'
+pool: 
+  name: Default
+  demands:
+    - agent.name -equals TC01 
 
 jobs:
 - job: SSH_Connection
