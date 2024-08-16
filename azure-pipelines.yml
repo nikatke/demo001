@@ -10,12 +10,7 @@ jobs:
 - job: SSH_Connection
   displayName: 'Establish SSH Connection between Two Remote VMs'
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      addToPath: true
-    displayName: 'Use Python 3.x'
-  
+    
   - script: |
       
       REMOTE_USER_1="infodba"
