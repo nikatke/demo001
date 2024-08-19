@@ -7,5 +7,11 @@ pool:
 steps:
 - script: |
     echo "Copying files to the destination server"
-    scp -r /opt/app/siemens/test infodba@192.168.80.108:/opt/app/siemens/
+    scp -r /opt/app/siemens/dc_14.1/repository/deploy_scripts/Dev02/install/20240812171048IST/deploy_DENBG0817VM.zip infodba@192.168.80.108:/opt/app/siemens/
   displayName: 'Copy Files to Destination Server'
+
+- script: |
+    echo "Unzipping files to the destination server"
+    cd /opt/app/siemens/
+    unzip deploy_DENBG0817VM.zip -d /opt/app/siemens/deploy_DENBG0817VM
+  displayName: 'Unzip Files to Destination Server'
