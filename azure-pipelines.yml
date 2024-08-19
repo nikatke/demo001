@@ -11,6 +11,7 @@ steps:
   
     echo "Unzipping files to the destination server"
     ssh infodba@192.168.80.108
+    echo "ssh done"
     unzip /opt/app/siemens/deploy_DENBG0817VM.zip -d /opt/app/siemens/deploy_DENBG0817VM
   displayName: 'Copy & Unzip Files to Destination Server'
 
