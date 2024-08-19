@@ -1,22 +1,11 @@
 trigger:
-- none
-
+- main
+ 
 pool: 
-  name: Default
-  demands:
-    - agent.name -equals TC01
-
-jobs:
-- job: SSH_Connection
-  displayName: 'Establish SSH Connection '
-  steps:
-  - task: CopyFilesOverSSH@0
-    inputs:
-      sshEndpoint: 'DENBG0811VM'
-      sourceFolder: '/opt/app/siemens/test'
-      contents: '**'
-      targetFolder: 'C:\Users\12880\Documents'
-      readyTimeout: '20000'
-      failOnEmptySource: true
-    
-  
+  name: TC_811
+ 
+steps:
+- script: |
+    echo "Copying files to the destination server"
+    scp -r /opt/app/siemens/test infodba@192.168.80.108:/opt/app/siemens/
+  displayName: 'Copy Files to Destination Server'
