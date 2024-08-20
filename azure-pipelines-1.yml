@@ -71,7 +71,7 @@ stages:
       name: TC_811
     steps:
     - script: |
-        echo "Creating New DC Environment: ${{ variables.DC_ENV_NAME }}"
+        echo "Creating New DC Environment: $(DC_ENV_NAME)"
         echo "On VM: ${{ parameters.Destination_Machine_Name }}"
         echo "Using Quick Deploy file: ${{ variables.INPUT_FILE_PATH }}"
         echo "Installing TC Foundation 14.0 on VM: ${{ parameters.Destination_Machine_Name }}"
@@ -87,7 +87,7 @@ stages:
     - script: |
         echo "Generating Deploy script using Quick Deploy"
         cd ${{ variables.DC_QUICK_DEPLOY_PATH }}
-        ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=${{ variables.DC_ENV_NAME }} -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=${{ variables.SCRIPTS_DIR_NAME }} -machine=${{ parameters.Destination_Machine_Name }}
+        ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=$(DC_ENV_NAME) -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=${{ parameters.Destination_Machine_Name }}
       displayName: 'Generate Deploy Script'
 
 - stage: Copy_Deploy_Script
@@ -99,7 +99,7 @@ stages:
     steps:
     - script: |
         echo "Copying files to the destination server"
-        scp -r ${{ variables.TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO }}/${{ variables.DC_ENV_NAME }}/install/${{ variables.SCRIPTS_DIR_NAME }} infodba@192.168.80.108:${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}
+        scp -r ${{ variables.TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO }}/$(DC_ENV_NAME)/install/$(SCRIPTS_DIR_NAME) infodba@192.168.80.108:${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}
       displayName: 'Copy Files to Destination Server'
 
 - stage: Unzip_Deploy_Script
@@ -111,7 +111,7 @@ stages:
     steps:
     - script: |
         echo "Unzipping files on the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/${{ variables.SCRIPTS_DIR_NAME }}/${{ variables.MACHINE_SCRIPT_ZIP_NAME }} -d ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/${{ variables.SCRIPTS_DIR_NAME }}/${{ variables.MACHINE_SCRIPT_DIR_NAME }}
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) -d ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
@@ -123,7 +123,7 @@ stages:
     steps:
     - script: |
         echo "Executing deploy script on the destination server"
-        FULL_COMMAND="cd ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/${{ variables.SCRIPTS_DIR_NAME }}/${{ variables.MACHINE_SCRIPT_DIR_NAME }} && ./deploy.sh -softwareLocation=${{ variables.TARGET_VM_SOFTWARE_LOCATION }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }}"
+        FULL_COMMAND="cd ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=${{ variables.TARGET_VM_SOFTWARE_LOCATION }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }}"
         echo "Executing command: $FULL_COMMAND"
         ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$FULL_COMMAND"
       displayName: 'Execute deploy script on Destination Server'
