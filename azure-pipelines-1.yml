@@ -31,6 +31,7 @@ variables:
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
   TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
   TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
+  INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
   #DC_ENV_NAME: test01
   
 
@@ -61,18 +62,9 @@ stages:
     steps:
     - script: |
 
-        $JAVA_HOME='/opt/app/siemens/JAVA/jdk-11.0.21'
-        $DC_QUICK_DEPLOY_PATH='/opt/app/siemens/dc_14.1/deployment_center/additional_tools/internal/dc_quick_deploy'
-        $DC_URL='http://192.168.80.54:8080/deploymentcenter'
-        $DC_DEPLOY_SCRIPT_DIR_NAME='deploy'
-        $DC_ENV_NAME=$(DC_ENVIRONMENT_NAME)
-        $INPUT_FILE_PATH='/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
-        $SCRIPTS_DIR_NAME=$(SCRIPTS_DIR_NAME)
-        $TARGET_VM_MACHINE_NAME=$(TARGET_VM_MACHINE_NAME)
-
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH)
-        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$INPUT_FILE_PATH -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$SCRIPTS_DIR_NAME -machine=$TARGET_VM_MACHINE_NAME
+        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$(dcEnvironmentName) -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(scripts_dir_name) -machine=$(target_vm_machine_name)
       displayName: 'Generate Deploy Script'
 
 - stage: Copy_Deploy_Script
