@@ -41,15 +41,25 @@ stages:
       name: TC_811
     steps:
     - script: |
+        echo "Setting up Build Variables..."
         BUILD_NUMBER=$(echo $(Build.BuildNumber) | sed 's/\./_/g')
+        echo "Build Number: $BUILD_NUMBER"
         echo "##vso[task.setvariable variable=BUILD_NUMBER]$BUILD_NUMBER"
+        
         DC_ENV_NAME="${{ parameters.VM_Environment_Name }}_$BUILD_NUMBER"
+        echo "DC Environment Name: $DC_ENV_NAME"
         echo "##vso[task.setvariable variable=DC_ENV_NAME]$DC_ENV_NAME"
+        
         SCRIPTS_DIR_NAME="${{ variables.DC_DEPLOY_SCRIPT_DIR_NAME }}_$BUILD_NUMBER"
+        echo "Scripts Directory Name: $SCRIPTS_DIR_NAME"
         echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]$SCRIPTS_DIR_NAME"
+        
         MACHINE_SCRIPT_DIR_NAME="deploy_${{ parameters.Destination_Machine_Name }}"
+        echo "Machine Script Directory Name: $MACHINE_SCRIPT_DIR_NAME"
         echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]$MACHINE_SCRIPT_DIR_NAME"
+        
         MACHINE_SCRIPT_ZIP_NAME="deploy_${{ parameters.Destination_Machine_Name }}.zip"
+        echo "Machine Script Zip Name: $MACHINE_SCRIPT_ZIP_NAME"
         echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]$MACHINE_SCRIPT_ZIP_NAME"
       displayName: 'Set Build Variables'
 
