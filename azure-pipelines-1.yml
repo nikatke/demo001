@@ -43,13 +43,12 @@ stages:
       name: TC_811
     steps:
     - script: |
-        echo "##vso[task.setvariable variable=TARGET_VM_MACHINE_NAME]${{ parameters.Destination_Machine_Name }}"
-        echo "##vso[task.setvariable variable=DC_ENV_NAME]$[format('{0}_{1}', parameters.VM_Environment_Name, variables['BUILD_NUMBER_SAFE'])]"
-        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]$[format('{0}_{1}', variables['DC_DEPLOY_SCRIPT_DIR_NAME'], variables['BUILD_NUMBER_SAFE'])]"
-        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]$[format('deploy_{0}', variables['TARGET_VM_MACHINE_NAME'])]"
-        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]$[format('{0}.zip', variables['MACHINE_SCRIPT_DIR_NAME'])]"
-        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_PATH]$[format('{0}/{1}/install/{2}/{3}', variables['TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO'], variables['DC_ENV_NAME'], variables['SCRIPTS_DIR_NAME'], variables['MACHINE_SCRIPT_ZIP_NAME'])]"
-        echo "##vso[task.setvariable variable=UNZIP_TARGET_PATH]$[format('{0}/{1}/{2}', variables['TARGET_VM_DEPLOY_SCRIPTS_DIR'], variables['SCRIPTS_DIR_NAME'], variables['MACHINE_SCRIPT_DIR_NAME'])]"
+        echo "##vso[task.setvariable variable=DC_ENV_NAME]${{ parameters.VM_Environment_Name }}_${{ variables['BUILD_NUMBER_SAFE'] }}"
+        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]${{ variables['DC_DEPLOY_SCRIPT_DIR_NAME'] }}_${{ variables['BUILD_NUMBER_SAFE'] }}"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]deploy_${{ parameters.Destination_Machine_Name }}"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]${{ variables['MACHINE_SCRIPT_DIR_NAME'] }}.zip"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_PATH]${{ variables['TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO'] }}/${{ variables['DC_ENV_NAME'] }}/install/${{ variables['SCRIPTS_DIR_NAME'] }}/${{ variables['MACHINE_SCRIPT_ZIP_NAME'] }}"
+        echo "##vso[task.setvariable variable=UNZIP_TARGET_PATH]${{ variables['TARGET_VM_DEPLOY_SCRIPTS_DIR'] }}/${{ variables['SCRIPTS_DIR_NAME'] }}/${{ variables['MACHINE_SCRIPT_DIR_NAME'] }}"
       displayName: 'Prepare Global Variables'
 
 - stage: Generate_Deploy_Script
