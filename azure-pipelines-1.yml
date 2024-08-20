@@ -30,74 +30,85 @@ variables:
   JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
   TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
-  TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
+  TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14'
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
-  #DC_ENV_NAME: test01
-  
 
 stages:
-- stage: Prepare
+- stage: Set_Build_Variables
   jobs:
-  - job: Prepare_Azure_Variables
+  - job: Set_Build_Variables
     pool:
       name: TC_811
     steps:
     - script: |
-        # Setting the specified variables
-        echo '##vso[task.setvariable variable=dcEnvironmentName]$(VM_Environment_Name)_$(Build.BuildNumber)'
-        echo '##vso[task.setvariable variable=target_vm_machine_name]$(Destination_Machine_Name)'
-        echo '##vso[task.setvariable variable=machine_script_dir_name]deploy_$(target_vm_machine_name)'
-        echo '##vso[task.setvariable variable=machine_script_zip_name]$(machine_script_dir_name).zip'
-        echo '##vso[task.setvariable variable=scripts_dir_name]$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(Build.BuildNumber)'
-        echo '##vso[task.setvariable variable=machine_script_path]$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(dcEnvironmentName)/install/$(scripts_dir_name)/$(machine_script_zip_name)'
-        echo '##vso[task.setvariable variable=unzip_target_path]$(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(scripts_dir_name)/$(machine_script_dir_name)'
-        
-      displayName: 'Prepare Azure Variables'
+        echo "##vso[task.setvariable variable=BUILD_NUMBER]$(Build.BuildNumber | replace('.', '_'))"
+        echo "##vso[task.setvariable variable=DC_ENV_NAME]${{ parameters.VM_Environment_Name }}_$(Build.BuildNumber | replace('.', '_'))"
+        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]${{ variables.DC_DEPLOY_SCRIPT_DIR_NAME }}_$(Build.BuildNumber | replace('.', '_'))"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]deploy_${{ parameters.Destination_Machine_Name }}"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]deploy_${{ parameters.Destination_Machine_Name }}.zip"
+      displayName: 'Set Build Variables'
+
+- stage: DECLARATION
+  dependsOn: Set_Build_Variables
+  jobs:
+  - job: Verify_Parameters
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+        echo "Creating New DC Environment: ${{ variables.DC_ENV_NAME }}"
+        echo "On VM: ${{ parameters.Destination_Machine_Name }}"
+        echo "Using Quick Deploy file: ${{ variables.INPUT_FILE_PATH }}"
+        echo "Installing TC Foundation 14.0 on VM: ${{ parameters.Destination_Machine_Name }}"
+      displayName: 'Verify Selected Parameters'
 
 - stage: Generate_Deploy_Script
+  dependsOn: DECLARATION
   jobs:
   - job: Generate
     pool:
       name: TC_811
     steps:
     - script: |
-
         echo "Generating Deploy script using Quick Deploy"
-        cd $(DC_QUICK_DEPLOY_PATH)
-        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$(dcEnvironmentName) -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(scripts_dir_name) -machine=$(target_vm_machine_name)
+        cd ${{ variables.DC_QUICK_DEPLOY_PATH }}
+        ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=${{ variables.DC_ENV_NAME }} -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=${{ variables.SCRIPTS_DIR_NAME }} -machine=${{ parameters.Destination_Machine_Name }}
       displayName: 'Generate Deploy Script'
 
 - stage: Copy_Deploy_Script
+  dependsOn: Generate_Deploy_Script
   jobs:
   - job: Copy
     pool:
       name: TC_811
     steps:
     - script: |
-      
         echo "Copying files to the destination server"
-        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(DC_ENV_NAME)/install/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
+        scp -r ${{ variables.TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO }}/{{ variables.DC_ENV_NAME }}/install/${{ variables.SCRIPTS_DIR_NAME }} infodba@192.168.80.108:${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}
       displayName: 'Copy Files to Destination Server'
 
 - stage: Unzip_Deploy_Script
+  dependsOn: Copy_Deploy_Script
   jobs:
   - job: Unzip
     pool:
       name: TC_811
     steps:
     - script: |
-        
-        echo "Unzipping files to the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME)
+        echo "Unzipping files on the destination server"
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip ${{ variables.UNZIP_TARGET_PATH }} -d ${{ variables.UNZIP_TARGET_PATH }}
       displayName: 'Unzip Files on Destination Server'
-      
+
 - stage: Execute_Deploy_Script
+  dependsOn: Unzip_Deploy_Script
   jobs:
   - job: Execute
     pool:
       name: TC_811
     steps:
     - script: |
-        echo "Executing deploy script in the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 'cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)'
-      displayName: 'Execute deploy script in Destination Server'      
+        echo "Executing deploy script on the destination server"
+        FULL_COMMAND="cd ${{ variables.UNZIP_TARGET_PATH }} && ./deploy.sh -softwareLocation=${{ variables.TARGET_VM_SOFTWARE_LOCATION }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }}"
+        echo "Executing command: $FULL_COMMAND"
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$FULL_COMMAND"
+      displayName: 'Execute deploy script on Destination Server'
