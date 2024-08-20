@@ -1,0 +1,111 @@
+trigger:
+- none
+
+pool: 
+  name: TC_811
+
+parameters:
+- name: VM_Environment_Name
+  displayName: 'VM Environment Name'
+  type: string
+  values:
+  - TEST1
+  - TEST2
+  - TEST3
+  default: TEST1
+- name: Destination_Machine_Name
+  displayName: 'Destination Machine Name'
+  type: string
+  values:
+  - DENBG0817VM
+  - DENBG0811VM
+  default: DENBG0817VM
+
+variables:
+  dcusername: 'dcadmin'
+  dcpassword: 'dcadmin'
+  DC_QUICK_DEPLOY_PATH: '/opt/app/siemens/dc_14.1/deployment_center/additional_tools/internal/dc_quick_deploy'
+  DC_URL: 'http://192.168.80.54:8080/deploymentcenter'
+  DC_DEPLOY_SCRIPT_DIR_NAME: 'deploy'
+  JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
+  TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
+  TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
+  TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
+  #DC_ENV_NAME: test01
+  
+
+stages:
+- stage: Prepare
+  jobs:
+  - job: Prepare_Azure_Variables
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+        # Setting the specified variables
+        echo '##vso[task.setvariable variable=dcEnvironmentName]$(VM_Environment_Name)_$(Build.BuildNumber)'
+        echo '##vso[task.setvariable variable=target_vm_machine_name]$(Destination_Machine_Name)'
+        echo '##vso[task.setvariable variable=machine_script_dir_name]deploy_$(target_vm_machine_name)'
+        echo '##vso[task.setvariable variable=machine_script_zip_name]$(machine_script_dir_name).zip'
+        echo '##vso[task.setvariable variable=scripts_dir_name]$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(Build.BuildNumber)'
+        echo '##vso[task.setvariable variable=machine_script_path]$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(dcEnvironmentName)/install/$(scripts_dir_name)/$(machine_script_zip_name)'
+        echo '##vso[task.setvariable variable=unzip_target_path]$(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(scripts_dir_name)/$(machine_script_dir_name)'
+        
+      displayName: 'Prepare Azure Variables'
+
+- stage: Generate_Deploy_Script
+  jobs:
+  - job: Generate
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+
+        $JAVA_HOME='/opt/app/siemens/JAVA/jdk-11.0.21'
+        $DC_QUICK_DEPLOY_PATH='/opt/app/siemens/dc_14.1/deployment_center/additional_tools/internal/dc_quick_deploy'
+        $DC_URL='http://192.168.80.54:8080/deploymentcenter'
+        $DC_DEPLOY_SCRIPT_DIR_NAME='deploy'
+        $DC_ENV_NAME=$(DC_ENVIRONMENT_NAME)
+        $INPUT_FILE_PATH='/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
+        $SCRIPTS_DIR_NAME=$(SCRIPTS_DIR_NAME)
+        $TARGET_VM_MACHINE_NAME=$(TARGET_VM_MACHINE_NAME)
+
+        echo "Generating Deploy script using Quick Deploy"
+        cd $(DC_QUICK_DEPLOY_PATH)
+        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$INPUT_FILE_PATH -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$SCRIPTS_DIR_NAME -machine=$TARGET_VM_MACHINE_NAME
+      displayName: 'Generate Deploy Script'
+
+- stage: Copy_Deploy_Script
+  jobs:
+  - job: Copy
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+      
+        echo "Copying files to the destination server"
+        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(DC_ENV_NAME)/install/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
+      displayName: 'Copy Files to Destination Server'
+
+- stage: Unzip_Deploy_Script
+  jobs:
+  - job: Unzip
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+        
+        echo "Unzipping files to the destination server"
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME)
+      displayName: 'Unzip Files on Destination Server'
+      
+- stage: Execute_Deploy_Script
+  jobs:
+  - job: Execute
+    pool:
+      name: TC_811
+    steps:
+    - script: |
+        echo "Executing deploy script in the destination server"
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 'cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)'
+      displayName: 'Execute deploy script in Destination Server'      
