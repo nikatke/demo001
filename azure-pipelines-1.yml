@@ -87,6 +87,11 @@ stages:
     - script: |
         echo "Generating Deploy script using Quick Deploy"
         cd ${{ variables.DC_QUICK_DEPLOY_PATH }}
+        
+        # Debug the variables
+        echo "DC_ENV_NAME: $(DC_ENV_NAME)"
+        echo "SCRIPTS_DIR_NAME: $(SCRIPTS_DIR_NAME)"
+        
         ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=$(DC_ENV_NAME) -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=${{ parameters.Destination_Machine_Name }}
       displayName: 'Generate Deploy Script'
 
