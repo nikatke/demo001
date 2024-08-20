@@ -34,46 +34,23 @@ variables:
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
 
 stages:
-- stage: Set_Build_Variables
+- stage: Set_Variables
   jobs:
-  - job: Set_Build_Variables
+  - job: Set_Environment_Variables
     pool:
       name: TC_811
     steps:
     - script: |
-        echo "Setting up Build Variables..."
-        BUILD_NUMBER=$(echo $(Build.BuildNumber) | sed 's/\./_/g')
-        echo "##vso[task.setvariable variable=BUILD_NUMBER]$BUILD_NUMBER"
-        
-        DC_ENV_NAME="${{ parameters.VM_Environment_Name }}_$BUILD_NUMBER"
-        echo "##vso[task.setvariable variable=DC_ENV_NAME]$DC_ENV_NAME"
-        
-        SCRIPTS_DIR_NAME="${{ variables.DC_DEPLOY_SCRIPT_DIR_NAME }}_$BUILD_NUMBER"
-        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]$SCRIPTS_DIR_NAME"
-        
-        MACHINE_SCRIPT_DIR_NAME="deploy_${{ parameters.Destination_Machine_Name }}"
-        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]$MACHINE_SCRIPT_DIR_NAME"
-        
-        MACHINE_SCRIPT_ZIP_NAME="deploy_${{ parameters.Destination_Machine_Name }}.zip"
-        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]$MACHINE_SCRIPT_ZIP_NAME"
-      displayName: 'Set Build Variables'
-
-- stage: DECLARATION
-  dependsOn: Set_Build_Variables
-  jobs:
-  - job: Verify_Parameters
-    pool:
-      name: TC_811
-    steps:
-    - script: |
-        echo "Creating New DC Environment: $(DC_ENV_NAME)"
-        echo "On VM: ${{ parameters.Destination_Machine_Name }}"
-        echo "Using Quick Deploy file: ${{ variables.INPUT_FILE_PATH }}"
-        echo "Installing TC Foundation 14.0 on VM: ${{ parameters.Destination_Machine_Name }}"
-      displayName: 'Verify Selected Parameters'
+        echo "##vso[task.setvariable variable=BUILD_NUMBER_TRANSFORMED]$(echo $(Build.BuildNumber) | sed 's/\./_/g')"
+        echo "##vso[task.setvariable variable=DC_ENV_NAME]${{ parameters.VM_Environment_Name }}_$(echo $(BUILD_NUMBER_TRANSFORMED))"
+        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]${{ variables.DC_DEPLOY_SCRIPT_DIR_NAME }}_$(echo $(BUILD_NUMBER_TRANSFORMED))"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_DIR_NAME]deploy_${{ parameters.Destination_Machine_Name }}"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_ZIP_NAME]$(echo $(MACHINE_SCRIPT_DIR_NAME)).zip"
+        echo "##vso[task.setvariable variable=MACHINE_SCRIPT_PATH]${{ variables.TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO }}/${{ variables.DC_ENV_NAME }}/$(echo $(SCRIPTS_DIR_NAME))/$(echo $(MACHINE_SCRIPT_ZIP_NAME))"
+        echo "##vso[task.setvariable variable=UNZIP_TARGET_PATH]${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(echo $(SCRIPTS_DIR_NAME))/$(echo $(MACHINE_SCRIPT_DIR_NAME))"
+      displayName: 'Set Environment Variables'
 
 - stage: Generate_Deploy_Script
-  dependsOn: DECLARATION
   jobs:
   - job: Generate
     pool:
@@ -82,15 +59,10 @@ stages:
     - script: |
         echo "Generating Deploy script using Quick Deploy"
         cd ${{ variables.DC_QUICK_DEPLOY_PATH }}
-        
-        echo "DC_ENV_NAME: $(DC_ENV_NAME)"
-        echo "SCRIPTS_DIR_NAME: $(SCRIPTS_DIR_NAME)"
-        
-        ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=$(DC_ENV_NAME) -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=${{ parameters.Destination_Machine_Name }}
+        ./dc_quick_deploy.sh -dcurl=${{ variables.DC_URL }} -environment=${{ variables.DC_ENV_NAME }} -inputFile=${{ variables.INPUT_FILE_PATH }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }} -scriptDirectoryName=${{ variables.SCRIPTS_DIR_NAME }} -machine=${{ parameters.Destination_Machine_Name }}
       displayName: 'Generate Deploy Script'
 
 - stage: Copy_Deploy_Script
-  dependsOn: Generate_Deploy_Script
   jobs:
   - job: Copy
     pool:
@@ -98,11 +70,10 @@ stages:
     steps:
     - script: |
         echo "Copying files to the destination server"
-        scp -r ${{ variables.TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO }}/$(DC_ENV_NAME)/install/$(SCRIPTS_DIR_NAME) infodba@192.168.80.108:${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}
+        scp -r ${{ variables.MACHINE_SCRIPT_PATH }} infodba@192.168.80.108:${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}
       displayName: 'Copy Files to Destination Server'
 
 - stage: Unzip_Deploy_Script
-  dependsOn: Copy_Deploy_Script
   jobs:
   - job: Unzip
     pool:
@@ -110,11 +81,10 @@ stages:
     steps:
     - script: |
         echo "Unzipping files on the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_ZIP_NAME) -d ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME)
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip ${{ variables.UNZIP_TARGET_PATH }} -d ${{ variables.UNZIP_TARGET_PATH }}
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
-  dependsOn: Unzip_Deploy_Script
   jobs:
   - job: Execute
     pool:
@@ -122,7 +92,7 @@ stages:
     steps:
     - script: |
         echo "Executing deploy script on the destination server"
-        FULL_COMMAND="cd ${{ variables.TARGET_VM_DEPLOY_SCRIPTS_DIR }}/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=${{ variables.TARGET_VM_SOFTWARE_LOCATION }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }}"
+        FULL_COMMAND="cd ${{ variables.UNZIP_TARGET_PATH }} && ./deploy.sh -softwareLocation=${{ variables.TARGET_VM_SOFTWARE_LOCATION }} -dcusername=${{ variables.dcusername }} -dcpassword=${{ variables.dcpassword }}"
         echo "Executing command: $FULL_COMMAND"
         ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$FULL_COMMAND"
       displayName: 'Execute deploy script on Destination Server'
