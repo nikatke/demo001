@@ -71,16 +71,11 @@ stages:
       name: TC_811
     steps:
     - script: |
+    
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         echo "$TARGET_VM_MACHINE_NAME"
-        
-        #BUILD_NUMBER=$(Build.BuildNumber)
-        #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$(BUILD_NUMBER)"
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$(SCRIPTS_DIR_NAME)"
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH)
         ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
@@ -94,13 +89,8 @@ stages:
     steps:
     - script: |
         
-        #BUILD_NUMBER=$(Build.BuildNumber)
-        #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$(BUILD_NUMBER)"
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
@@ -116,11 +106,6 @@ stages:
     steps:
     - script: |
         
-        #BUILD_NUMBER=$(Build.BuildNumber)
-        #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$(BUILD_NUMBER)"
-        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
@@ -136,17 +121,11 @@ stages:
     steps:
     - script: |
         
-        #BUILD_NUMBER=$(Build.BuildNumber)
-        #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$(BUILD_NUMBER)"
-        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         echo "Executing deploy script in the destination server"
-        
-        FULL_COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
-        echo "Executing command: $FULL_COMMAND"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$FULL_COMMAND"
-        #ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)
+        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
+        echo "Executing command: $COMMAND"
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$COMMAND"
+
       displayName: 'Execute deploy script in Destination Server'      
