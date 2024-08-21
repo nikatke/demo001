@@ -36,7 +36,7 @@ variables:
   BUILD_NO: $(Build.BuildNumber)
   BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-  ROOT_PASSWORD: $(ROOT_PASSWORD)
+  
   
 
 stages:
@@ -129,7 +129,8 @@ stages:
         #echo "Executing command: $COMMAND"
         #ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$COMMAND"
         # Wrap the command with sudo to switch to root and execute
-        REMOTE_COMMAND="echo $(ROOT_PASSWORD) | sudo -S su - root -c '$COMMAND'"
+        ROOT_PASSWORD=$(ROOT_PASSWORD)
+        REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
         echo "Executing command as root: $COMMAND"
         ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$REMOTE_COMMAND"
 
