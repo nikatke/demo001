@@ -33,8 +33,9 @@ variables:
   #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
-  BUILD_NO: $(Build.BuildNumber)
-  BUILD_NUMBER: ${BUILD_NO//./_}
+  #BUILD_NO: $(Build.BuildNumber)
+  BUILD_NUMBER: ${$(Build.BuildNumber)//./_}
+  SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
   
 
 stages:
@@ -78,11 +79,11 @@ stages:
         echo "$(BUILD_NUMBER)"
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$SCRIPTS_DIR_NAME"
+        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        echo "$(SCRIPTS_DIR_NAME)"
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH)
-        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$SCRIPTS_DIR_NAME -machine=$TARGET_VM_MACHINE_NAME
+        ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       displayName: 'Generate Deploy Script'
 
 - stage: Copy_Deploy_Script
@@ -98,12 +99,13 @@ stages:
         echo "$(BUILD_NUMBER)"
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
         echo "Copying files to the destination server"
-        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$SCRIPTS_DIR_NAME infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
+        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME) infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
       displayName: 'Copy Files to Destination Server'
 
 - stage: Unzip_Deploy_Script
@@ -117,12 +119,13 @@ stages:
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
         echo "$(BUILD_NUMBER)"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
         echo "Unzipping files to the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_DIR_NAME
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_DIR_NAME
       displayName: 'Unzip Files on Destination Server'
       
 - stage: Execute_Deploy_Script
@@ -136,14 +139,14 @@ stages:
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
         echo "$(BUILD_NUMBER)"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        echo "$SCRIPTS_DIR_NAME"
+        #SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        echo "$(SCRIPTS_DIR_NAME)"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         echo "Executing deploy script in the destination server"
         
-        FULL_COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
+        FULL_COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
         echo "Executing command: $FULL_COMMAND"
         ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$FULL_COMMAND"
-        #ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)
+        #ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)
       displayName: 'Execute deploy script in Destination Server'      
