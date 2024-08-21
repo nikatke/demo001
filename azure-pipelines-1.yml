@@ -27,8 +27,7 @@ variables:
   DC_QUICK_DEPLOY_PATH: '/opt/app/siemens/dc_14.1/deployment_center/additional_tools/internal/dc_quick_deploy'
   DC_URL: 'http://192.168.80.54:8080/deploymentcenter'
   DC_DEPLOY_SCRIPT_DIR_NAME: 'deploy'
-  #JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
-  JAVA_HOME: '/opt/Java/zulu11.39.15-ca-fx-jre11.0.7-linux_x64'
+  JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
   TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
   #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
