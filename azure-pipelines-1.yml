@@ -32,7 +32,7 @@ variables:
   TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
   #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
-  INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
+  INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/LS24_install_Fnd140.xml'
   BUILD_NO: $(Build.BuildNumber)
   BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
@@ -85,7 +85,7 @@ stages:
   jobs:
   - job: Copy
     pool:
-      name: TC_811
+      name: TC_811  #TC_817
     steps:
     - script: |
         
