@@ -33,8 +33,8 @@ variables:
   #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/test_install_Fnd140.xml'
-  #BUILD_NO: $(Build.BuildNumber)
-  BUILD_NUMBER: ${$(Build.BuildNumber)//./_}
+  BUILD_NO: $(Build.BuildNumber)
+  BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
   
 
