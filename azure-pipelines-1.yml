@@ -125,7 +125,7 @@ stages:
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
         echo "Unzipping files to the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$SCRIPTS_DIR_NAME/$MACHINE_SCRIPT_DIR_NAME
+        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
       displayName: 'Unzip Files on Destination Server'
       
 - stage: Execute_Deploy_Script
