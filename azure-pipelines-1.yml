@@ -76,9 +76,9 @@ stages:
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
         echo "$(BUILD_NUMBER)"
-        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$BUILD_NUMBER
+        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$BUILD_NUMBER
+        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
         echo "$SCRIPTS_DIR_NAME"
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH)
@@ -95,10 +95,10 @@ stages:
         
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$BUILD_NUMBER"
-        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$BUILD_NUMBER
+        echo "$(BUILD_NUMBER)"
+        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "$DC_ENV_NAME"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$BUILD_NUMBER
+        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
@@ -116,8 +116,8 @@ stages:
         
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$BUILD_NUMBER"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$BUILD_NUMBER
+        echo "$(BUILD_NUMBER)"
+        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
@@ -135,8 +135,8 @@ stages:
         
         #BUILD_NUMBER=$(Build.BuildNumber)
         #BUILD_NUMBER=${BUILD_NUMBER//./_}
-        echo "$BUILD_NUMBER"
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$BUILD_NUMBER
+        echo "$(BUILD_NUMBER)"
+        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
         echo "$SCRIPTS_DIR_NAME"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
