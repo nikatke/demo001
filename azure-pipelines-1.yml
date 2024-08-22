@@ -1,23 +1,14 @@
 trigger:
 - none
 
-parameters:
-- name: VM_Environment_Name
-  displayName: 'VM Environment Name'
-  type: string
-  default: TEST1
-  values:
-  - TEST1
-  - TEST2
-  - TEST3
-  
+parameters: 
 - name: Destination_Machine_Name
   displayName: 'Destination Machine Name'
   type: string
   default: DENBG0817VM
   values:
   - DENBG0817VM
-  - DENBG0811VM
+  - DENBG0000VM
   
 
 variables:
@@ -35,7 +26,7 @@ variables:
   BUILD_NO: $(Build.BuildNumber)
   BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-  DC_ENV_NAME: ${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
+  DC_ENV_NAME: ENV_${{ parameters.Destination_Machine_Name }}_$(BUILD_NUMBER)
   SOURCE_PATH_ARTIFACT: $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(DC_ENV_NAME)/install
 
 
@@ -49,7 +40,7 @@ stages:
     - script: |
         # Setting the specified variables
         target_vm_machine_name='${{ parameters.Destination_Machine_Name }}' 
-        dcEnvironmentName='${{ parameters.VM_Environment_Name }}_$(Build.BuildNumber)'
+        dcEnvironmentName='ENV_${{ parameters.Destination_Machine_Name }}_$(Build.BuildNumber)'
         machine_script_dir_name='deploy_'$target_vm_machine_name
         machine_script_zip_name=$machine_script_dir_name.zip
         scripts_dir_name='$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(Build.BuildNumber)'
@@ -60,13 +51,13 @@ stages:
 
 - stage: Generate_Deploy_Script
   jobs:
-  - job: Generate
+  - job: Generate_Deploy_Script
     pool:
       name: TC_811
     steps:
     - script: |
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
-        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
+        DC_ENV_NAME=ENV_${{ parameters.Destination_Machine_Name }}_$(BUILD_NUMBER)
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       
@@ -111,7 +102,7 @@ stages:
 
 - stage: Unzip_Deploy_Script
   jobs:
-  - job: Unzip
+  - job: Unzip_Deploy_Script
     pool:
       name: TC_817
     steps:
