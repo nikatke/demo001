@@ -72,7 +72,7 @@ stages:
     steps:
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/${{parameters.VM_Environment_Name}}_$(BUILD_NUMBER)/install/$(SCRIPTS_DIR_NAME)/deploy_${{parameters.Destination_Machine_Name}}.zip'
+        targetPath: '/opt/app/siemens/dc_14.1/repository/deploy_scripts/TEST1_20240822_7/install/deploy_20240822_7/deploy_DENBG0817VM.zip'
         artifact: 'deploy_scripts'
         publishLocation: 'pipeline'
       displayName: 'Publish Deploy Script Artifact'
