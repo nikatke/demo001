@@ -30,15 +30,12 @@ variables:
   JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
   TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
-  #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/LS24_install_Fnd140.xml'
   BUILD_NO: $(Build.BuildNumber)
   BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
   
-  
-
 stages:
 - stage: Prepare
   jobs:
@@ -73,45 +70,31 @@ stages:
         cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       displayName: 'Generate Deploy Script'
 
-#- stage: Copy_Deploy_Script
-#  jobs:
-#  - job: Copy
-#    pool:
-#      name: TC_811  
-#    steps:
-#    - script: |
-        
-#        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
-#        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
-#        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-#        MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
-#        echo "Copying files to the destination server"
-#        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME) infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
-#      displayName: 'Copy Files to Destination Server'
 - stage: Copy_Deploy_Script
   jobs:
   - job: Copy
     pool:
-      name: TC_811  # Source agent pool
+      name: TC_811  
     steps:
     - script: |
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
-        echo "$DC_ENV_NAME"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
-        echo "Creating artifact for deployment scripts"
+        echo "Packaging files for deployment"
         mkdir -p $(Build.ArtifactStagingDirectory)/$MACHINE_SCRIPT_DIR_NAME
         cp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME)/* $(Build.ArtifactStagingDirectory)/$MACHINE_SCRIPT_DIR_NAME/
       displayName: 'Prepare files for artifact'
-      
+
     - publish: $(Build.ArtifactStagingDirectory)/$MACHINE_SCRIPT_DIR_NAME
       artifact: Deploy_Scripts_Artifact
       displayName: 'Publish Deployment Scripts as Artifact'
 
-  - job: Download
+- stage: Unzip_Deploy_Script
+  jobs:
+  - job: Unzip
     pool:
-      name: TC_817  # Destination agent pool
+      name: TC_817  # The pool for the destination VM agent
     steps:
     - download: current
       artifact: Deploy_Scripts_Artifact
@@ -120,39 +103,21 @@ stages:
     - script: |
         echo "Files downloaded to $(Pipeline.Workspace)/Deploy_Scripts_Artifact"
         ls $(Pipeline.Workspace)/Deploy_Scripts_Artifact
-      displayName: 'List Downloaded Files'
-
-
-- stage: Unzip_Deploy_Script
-  jobs:
-  - job: Unzip
-    pool:
-      name: TC_811
-    steps:
-    - script: |
-        
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-        MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
-        echo "Unzipping files to the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
+        echo "Unzipping files"
+        unzip $(Pipeline.Workspace)/Deploy_Scripts_Artifact/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
       displayName: 'Unzip Files on Destination Server'
       
 - stage: Execute_Deploy_Script
   jobs:
   - job: Execute
     pool:
-      name: TC_811
+      name: TC_817
     steps:
     - script: |
-        
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-        echo "Executing deploy script in the destination server"
-        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
-        ROOT_PASSWORD=$(ROOT_PASSWORD_817)
-        REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
-        echo "Executing command as root: $COMMAND"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$REMOTE_COMMAND"
-
-      displayName: 'Execute deploy script in Destination Server'      
+        echo "Executing deploy script"
+        cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)
+      displayName: 'Execute deploy script in Destination Server'  
