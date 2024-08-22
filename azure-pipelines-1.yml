@@ -1,9 +1,6 @@
 trigger:
 - none
 
-pool: 
-  name: TC_811
-
 parameters:
 - name: VM_Environment_Name
   displayName: 'VM Environment Name'
@@ -29,15 +26,11 @@ variables:
   DC_DEPLOY_SCRIPT_DIR_NAME: 'deploy'
   JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
-  TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
-  #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/LS24_install_Fnd140.xml'
   BUILD_NO: $(Build.BuildNumber)
   BUILD_NUMBER: ${BUILD_NO//./_}
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-  
-  
 
 stages:
 - stage: Prepare
@@ -66,7 +59,6 @@ stages:
       name: TC_811
     steps:
     - script: |
-    
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
         echo "Generating Deploy script using Quick Deploy"
@@ -75,50 +67,46 @@ stages:
 
 - stage: Copy_Deploy_Script
   jobs:
-  - job: Copy
+  - job: Publish_Artifact
     pool:
       name: TC_811  
     steps:
     - script: |
-        
         DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
-        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
-        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-        MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
-        echo "Copying files to the destination server"
-        scp -r $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME) infodba@192.168.80.108:$(TARGET_VM_DEPLOY_SCRIPTS_DIR)
-      displayName: 'Copy Files to Destination Server'
+        echo "Zipping files for artifact publishing"
+        zip -r deploy_scripts.zip $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME)
+      displayName: 'Zip Files'
+    
+    - publish: deploy_scripts.zip
+      artifact: deploy_scripts
+      displayName: 'Publish Deploy Script Artifact'
 
 - stage: Unzip_Deploy_Script
   jobs:
-  - job: Unzip
+  - job: Download_And_Unzip
     pool:
-      name: TC_811
+      name: TC_817
     steps:
+    - download: current
+      artifact: deploy_scripts
+      displayName: 'Download Deploy Script Artifact'
+
     - script: |
-        
-        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
-        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-        MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
-        echo "Unzipping files to the destination server"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
+        echo "Unzipping files on the destination server"
+        unzip deploy_scripts.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
-      
+
 - stage: Execute_Deploy_Script
   jobs:
   - job: Execute
     pool:
-      name: TC_811
+      name: TC_817
     steps:
     - script: |
-        
-        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
-        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
         echo "Executing deploy script in the destination server"
-        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
+        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
         ROOT_PASSWORD=$(ROOT_PASSWORD_817)
         REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
         echo "Executing command as root: $COMMAND"
-        ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$REMOTE_COMMAND"
-
-      displayName: 'Execute deploy script in Destination Server'  
+        eval "$REMOTE_COMMAND"
+      displayName: 'Execute Deploy Script in Destination Server'
