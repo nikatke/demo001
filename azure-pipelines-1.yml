@@ -127,7 +127,7 @@ stages:
         echo "Executing deploy script in the destination server"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
         MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
-        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
+        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
         ROOT_PASSWORD=$(ROOT_PASSWORD_817)
         REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
         echo "Executing command as root: $COMMAND"
