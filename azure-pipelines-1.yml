@@ -75,14 +75,9 @@ stages:
     pool:
       name: TC_811   
     steps:
-    - script: |
-        BUILD_NO=$(Build.BuildNumber)
-        BUILD_NUMBER=${BUILD_NO//./_}
-        SCRIPTS_DIR_NAME=$(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
-        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$SCRIPTS_DIR_NAME'
+        targetPath: '$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(DC_ENV_NAME)$(Build.BuildNumber)/install/$(SCRIPTS_DIR_NAME)$(Build.BuildNumber)'
         artifact: 'deploy_scripts'
         publishLocation: 'pipeline'
       displayName: 'Publish Deploy Script Artifact'
