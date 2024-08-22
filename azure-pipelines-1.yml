@@ -70,7 +70,7 @@ stages:
         cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       displayName: 'Generate Deploy Script'
 
-- stage: Copy_Deploy_Script
+- stage: Publish_Artifact
   jobs:
   - job: Publish_Artifact
     pool:
@@ -92,23 +92,22 @@ stages:
     pool:
       name: TC_817
     steps:
+    - script: |
+        echo "##vso[task.setvariable variable=TARGET_VM_DEPLOY_SCRIPTS_DIR]$(TARGET_VM_DEPLOY_SCRIPTS_DIR)"
+      displayName: 'Set Variables for Publishing'
     - task: DownloadPipelineArtifact@2
       inputs:
         buildType: 'current'
         artifactName: 'deploy_scripts'
-        targetPath: '/opt/app/siemens'
+        targetPath: '$(TARGET_VM_DEPLOY_SCRIPTS_DIR)'
 
 
 - stage: Unzip_Deploy_Script
   jobs:
-  - job: Download_And_Unzip
+  - job: Unzip
     pool:
       name: TC_817
     steps:
-    #- download: current
-    #  artifact: deploy_scripts
-    #  displayName: 'Download Deploy Script Artifact'
-
     - script: |
         echo "Unzipping files on the destination server"
         TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
@@ -116,7 +115,6 @@ stages:
         MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
         unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
         
-        #unzip deploy_${{parameters.Destination_Machine_Name}}.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
@@ -127,7 +125,9 @@ stages:
     steps:
     - script: |
         echo "Executing deploy script in the destination server"
-        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
+        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
+        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
+        COMMAND="cd $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$(MACHINE_SCRIPT_DIR_NAME) && ./deploy.sh -softwareLocation=$(TARGET_VM_SOFTWARE_LOCATION) -dcusername=$(dcusername) -dcpassword=$(dcpassword)"
         ROOT_PASSWORD=$(ROOT_PASSWORD_817)
         REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
         echo "Executing command as root: $COMMAND"
