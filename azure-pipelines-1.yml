@@ -26,6 +26,8 @@ variables:
   DC_DEPLOY_SCRIPT_DIR_NAME: 'deploy'
   JAVA_HOME: '/opt/app/siemens/JAVA/jdk-11.0.21'
   TARGET_VM_DEPLOY_SCRIPTS_DIR: '/opt/app/siemens'
+  TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO: '/opt/app/siemens/dc_14.1/repository/deploy_scripts'
+  #TARGET_VM_SOFTWARE_LOCATION: '/opt/app/siemens/dc_14.1/repository/software'  # SoftwareLocation
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/LS24_install_Fnd140.xml'
   BUILD_NO: $(Build.BuildNumber)
@@ -72,7 +74,7 @@ stages:
     steps:
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '/opt/app/siemens/dc_14.1/repository/deploy_scripts/TEST1_20240822_7/install/deploy_20240822_7/deploy_DENBG0817VM.zip'
+        targetPath: $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)/install/$(SCRIPTS_DIR_NAME)
         artifact: 'deploy_scripts'
         publishLocation: 'pipeline'
       displayName: 'Publish Deploy Script Artifact'
