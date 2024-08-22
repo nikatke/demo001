@@ -98,7 +98,12 @@ stages:
 
     - script: |
         echo "Unzipping files on the destination server"
-        unzip deploy_${{parameters.Destination_Machine_Name}}.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
+        TARGET_VM_MACHINE_NAME='${{ parameters.Destination_Machine_Name }}'
+        MACHINE_SCRIPT_DIR_NAME='deploy_'$TARGET_VM_MACHINE_NAME
+        MACHINE_SCRIPT_ZIP_NAME=$MACHINE_SCRIPT_DIR_NAME.zip
+        unzip $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_ZIP_NAME -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)/$MACHINE_SCRIPT_DIR_NAME
+        
+        #unzip deploy_${{parameters.Destination_Machine_Name}}.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
