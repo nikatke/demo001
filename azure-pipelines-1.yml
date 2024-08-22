@@ -129,7 +129,7 @@ stages:
         #echo "Executing command: $COMMAND"
         #ssh -T -o StrictHostKeyChecking=no infodba@192.168.80.108 "$COMMAND"
         # Wrap the command with sudo to switch to root and execute
-        ROOT_PASSWORD='7GlEdQfAevJUixSPYG7I'
+        ROOT_PASSWORD=$(ROOT_PASSWORD_817)
         echo "$ROOT_PASSWORD"
         REMOTE_COMMAND="echo $ROOT_PASSWORD | sudo -S su - root -c '$COMMAND'"
         echo "Executing command as root: $COMMAND"
