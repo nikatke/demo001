@@ -31,7 +31,8 @@ variables:
   TARGET_VM_SOFTWARE_LOCATION: '/mnt/dumps/TC/TC14' 
   INPUT_FILE_PATH: '/opt/app/siemens/Sample_xml_Files/LS24_install_Fnd140.xml'
   BUILD_NO: $(Build.BuildNumber)
-  BUILD_NUMBER: ${BUILD_NO//./_}
+  #BUILD_NUMBER: ${BUILD_NO//./_}
+  BUILD_NUMBER: $[replace(variables['BUILD_NO'], '.', '_')]
   SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
   DC_ENV_NAME: ${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
   SOURCE_PATH_ARTIFACT: $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(DC_ENV_NAME)/install/$(SCRIPTS_DIR_NAME)
@@ -76,12 +77,6 @@ stages:
     pool:
       name: TC_811   
     steps:
-    - script: |
-        echo "##vso[task.setvariable variable=BUILD_NUMBER]${BUILD_BUILDNUMBER//./_}"
-        echo "##vso[task.setvariable variable=DC_ENV_NAME]${{ parameters.VM_Environment_Name }}_${BUILD_NUMBER}"
-        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]$(DC_DEPLOY_SCRIPT_DIR_NAME)_${BUILD_NUMBER}"
-        echo "##vso[task.setvariable variable=SOURCE_PATH_ARTIFACT]$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/${DC_ENV_NAME}/install/${SCRIPTS_DIR_NAME}"
-      displayName: 'Set Variables'
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(SOURCE_PATH_ARTIFACT)'
