@@ -68,17 +68,18 @@ stages:
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       displayName: 'Generate Deploy Script'
+
 - stage: Copy_Deploy_Script
   jobs:
   - job: Publish_Artifact
     pool:
-      name: TC_811 
-    variables:
-      BUILD_NO: $(Build.BuildNumber)
-      BUILD_NUMBER: ${BUILD_NO//./_}
-      SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$BUILD_NUMBER
-      DC_ENV_NAME: ${{ parameters.VM_Environment_Name }}_$BUILD_NUMBER
+      name: TC_811   
     steps:
+    - script: |
+        BUILD_NO= $(Build.BuildNumber)
+        BUILD_NUMBER= ${BUILD_NO//./_}
+        SCRIPTS_DIR_NAME= $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+        DC_ENV_NAME= ${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$SCRIPTS_DIR_NAME'
