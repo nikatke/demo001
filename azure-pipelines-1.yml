@@ -73,7 +73,11 @@ stages:
   - job: Publish_Artifact
     pool:
       name: TC_811 
-    
+    variables:
+      BUILD_NO: $(Build.BuildNumber)
+      BUILD_NUMBER: ${BUILD_NO//./_}
+      SCRIPTS_DIR_NAME: $(DC_DEPLOY_SCRIPT_DIR_NAME)_$(BUILD_NUMBER)
+      DC_ENV_NAME: ${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
     steps:
     - task: PublishPipelineArtifact@1
       inputs:
