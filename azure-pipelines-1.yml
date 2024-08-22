@@ -64,15 +64,17 @@ stages:
         echo "Generating Deploy script using Quick Deploy"
         cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       displayName: 'Generate Deploy Script'
-
 - stage: Copy_Deploy_Script
   jobs:
   - job: Publish_Artifact
     pool:
       name: TC_811  
     steps:
-    - publish: $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(parameters.VM_Environment_Name)_$(BUILD_NUMBER)/install/$(SCRIPTS_DIR_NAME)/deploy_$(parameters.Destination_Machine_Name).zip
-      artifact: deploy_scripts
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/${{parameters.VM_Environment_Name}}_$(BUILD_NUMBER)/install/$(SCRIPTS_DIR_NAME)/deploy_${{parameters.Destination_Machine_Name}}.zip'
+        artifact: 'deploy_scripts'
+        publishLocation: 'pipeline'
       displayName: 'Publish Deploy Script Artifact'
 
 - stage: Unzip_Deploy_Script
@@ -87,7 +89,7 @@ stages:
 
     - script: |
         echo "Unzipping files on the destination server"
-        unzip deploy_$(parameters.Destination_Machine_Name).zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
+        unzip deploy_${{parameters.Destination_Machine_Name}}.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
