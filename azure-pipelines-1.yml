@@ -71,13 +71,7 @@ stages:
     pool:
       name: TC_811  
     steps:
-    - script: |
-        DC_ENV_NAME=${{ parameters.VM_Environment_Name }}_$(BUILD_NUMBER)
-        echo "Zipping files for artifact publishing"
-        zip -r deploy_scripts.zip $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$DC_ENV_NAME/install/$(SCRIPTS_DIR_NAME)
-      displayName: 'Zip Files'
-    
-    - publish: deploy_scripts.zip
+    - publish: $(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/$(parameters.VM_Environment_Name)_$(BUILD_NUMBER)/install/$(SCRIPTS_DIR_NAME)/deploy_$(parameters.Destination_Machine_Name).zip
       artifact: deploy_scripts
       displayName: 'Publish Deploy Script Artifact'
 
@@ -93,7 +87,7 @@ stages:
 
     - script: |
         echo "Unzipping files on the destination server"
-        unzip deploy_scripts.zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
+        unzip deploy_$(parameters.Destination_Machine_Name).zip -d $(TARGET_VM_DEPLOY_SCRIPTS_DIR)/$(SCRIPTS_DIR_NAME)
       displayName: 'Unzip Files on Destination Server'
 
 - stage: Execute_Deploy_Script
