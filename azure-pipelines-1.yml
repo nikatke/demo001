@@ -76,6 +76,12 @@ stages:
     pool:
       name: TC_811   
     steps:
+    - script: |
+        echo "##vso[task.setvariable variable=BUILD_NUMBER]${BUILD_BUILDNUMBER//./_}"
+        echo "##vso[task.setvariable variable=DC_ENV_NAME]${{ parameters.VM_Environment_Name }}_${BUILD_NUMBER}"
+        echo "##vso[task.setvariable variable=SCRIPTS_DIR_NAME]$(DC_DEPLOY_SCRIPT_DIR_NAME)_${BUILD_NUMBER}"
+        echo "##vso[task.setvariable variable=SOURCE_PATH_ARTIFACT]$(TARGET_VM_MAPPED_DRIVE_BACK_TO_DC_REPO)/${DC_ENV_NAME}/install/${SCRIPTS_DIR_NAME}"
+      displayName: 'Set Variables'
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(SOURCE_PATH_ARTIFACT)'
