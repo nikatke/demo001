@@ -86,15 +86,28 @@ stages:
         publishLocation: 'pipeline'
       displayName: 'Publish Deploy Script Artifact'
 
+- stage: Download_artifact
+  jobs:
+  - job: Download_artifact
+    pool:
+      name: TC_817
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'current'
+        artifactName: 'deploy_scripts'
+        targetPath: '/opt/app/siemens'
+
+
 - stage: Unzip_Deploy_Script
   jobs:
   - job: Download_And_Unzip
     pool:
       name: TC_817
     steps:
-    - download: current
-      artifact: deploy_scripts
-      displayName: 'Download Deploy Script Artifact'
+    #- download: current
+    #  artifact: deploy_scripts
+    #  displayName: 'Download Deploy Script Artifact'
 
     - script: |
         echo "Unzipping files on the destination server"
