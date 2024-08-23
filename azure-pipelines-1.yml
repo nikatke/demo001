@@ -72,10 +72,18 @@ stages:
           echo '##vso[task.setvariable variable=INPUT_FILE_PATH;isOutput=true]/opt/app/siemens/Sample_xml_Files/Working/Install_Fnd140.xml'
         elif [ "${{ parameters.Teamcenter_Install_Scenario }}" == "Install_Fnd140_MF62" ]; then
           echo '##vso[task.setvariable variable=INPUT_FILE_PATH;isOutput=true]/opt/app/siemens/Sample_xml_Files/Working/Install_Fnd140_MF62.xml'
-        fi
+        
+        # Retrieve the newly set variable
+        INPUT_FILE_PATH="$(INPUT_FILE_PATH)"
+        
+        # Validate the input file path
         echo "${{ parameters.Teamcenter_Install_Scenario }}"
         echo "$INPUT_FILE_PATH"
-        cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$INPUT_FILE_PATH -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
+        if [ -z "$INPUT_FILE_PATH" ]; then
+          echo "Error: INPUT_FILE_PATH is not set."
+          exit 1
+        fi
+        cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       
       displayName: 'Generate Deploy Script'
 
