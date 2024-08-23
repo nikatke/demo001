@@ -68,11 +68,13 @@ stages:
         DC_ENV_NAME=ENV_${{ parameters.Destination_Machine_Name }}_$(BUILD_NUMBER)
         echo "Generating Deploy script using Quick Deploy"
 
+        # Setting INPUT_FILE_PATH based on Teamcenter_Install_Scenario
         if [ "${{ parameters.Teamcenter_Install_Scenario }}" == "Install_Fnd140" ]; then
           echo '##vso[task.setvariable variable=INPUT_FILE_PATH;isOutput=true]/opt/app/siemens/Sample_xml_Files/Working/Install_Fnd140.xml'
         elif [ "${{ parameters.Teamcenter_Install_Scenario }}" == "Install_Fnd140_MF62" ]; then
           echo '##vso[task.setvariable variable=INPUT_FILE_PATH;isOutput=true]/opt/app/siemens/Sample_xml_Files/Working/Install_Fnd140_MF62.xml'
-        
+        fi  # Correctly closing the if-elif block
+
         # Retrieve the newly set variable
         INPUT_FILE_PATH="$(INPUT_FILE_PATH)"
         
