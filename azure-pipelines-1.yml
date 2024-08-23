@@ -87,7 +87,7 @@ stages:
           echo "Error: INPUT_FILE_PATH is not set."
           exit 1
         fi
-        cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$(INPUT_FILE_PATH) -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
+        cd $(DC_QUICK_DEPLOY_PATH) && ./dc_quick_deploy.sh -dcurl=$(DC_URL) -environment=$DC_ENV_NAME -inputFile=$INPUT_FILE_PATH -dcusername=$(dcusername) -dcpassword=$(dcpassword) -scriptDirectoryName=$(SCRIPTS_DIR_NAME) -machine=$TARGET_VM_MACHINE_NAME
       
       displayName: 'Generate Deploy Script'
 
